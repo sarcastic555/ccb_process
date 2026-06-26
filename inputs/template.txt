@@ -1,0 +1,22 @@
+# YYYYMMDD練習会
+
+## 参加者リスト
+https://docs.google.com/spreadsheets/d/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/edit?gid=0#gid=0
+
+## バンド結成表
+https://docs.google.com/spreadsheets/d/YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY/edit?gid=0#gid=0
+
+## 会場
+会場名を記載
+
+## 時間
+16:00-19:00
+
+## スタジオ一覧
+- スタジオ名A (00畳)
+- スタジオ名B (00畳)
+- スタジオ名C (00畳)
+- スタジオ名D (00畳)
+
+## お披露目の有無
+あり または なし
