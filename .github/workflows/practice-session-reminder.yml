@@ -1,0 +1,28 @@
+name: Conditioned Reminder
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+
+jobs:
+  reminder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+      LINE_GROUP_ID_PERSONAL: ${{ secrets.LINE_GROUP_ID_PERSONAL }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run conditioned reminder
+        run: python3 scripts/conditioned_reminder.py
