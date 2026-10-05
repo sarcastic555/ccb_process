@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib import error, request
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 AUTOMATION_DIR = ROOT / "automation" / "reminders"
@@ -61,10 +62,11 @@ def build_reminders_for_practice(practice_date: date) -> list[Reminder]:
     studio_booking_start = add_months(practice_date, -3) + timedelta(days=1)
     attendance_start = practice_date - timedelta(days=14)
     unanswered_reminder = practice_date - timedelta(days=8)
+    extra_studio_cancellation = practice_date - timedelta(days=8)
     schedule_share = practice_date - timedelta(days=4)
     collection_sheet_print = practice_date - timedelta(days=2)
+    attendance_decision = practice_date - timedelta(days=6)
     cancellation_fee_day = practice_date - timedelta(days=6)
-    rental_reminder_day = cancellation_fee_day - timedelta(days=2)
 
     reminders: list[Reminder] = []
 
@@ -103,6 +105,17 @@ def build_reminders_for_practice(practice_date: date) -> list[Reminder]:
     )
     reminders.append(
         Reminder(
+            kind="extra_studio_cancellation",
+            practice_date=practice_date,
+            trigger_date=extra_studio_cancellation,
+            trigger_hour=22,
+            title="余分に予約したスタジオのキャンセル",
+            body="余分に予約しているスタジオがあれば、全体練習の8日前までにキャンセルしてください。",
+            target="運営メンバー",
+        )
+    )
+    reminders.append(
+        Reminder(
             kind="schedule_share",
             practice_date=practice_date,
             trigger_date=schedule_share,
@@ -114,20 +127,9 @@ def build_reminders_for_practice(practice_date: date) -> list[Reminder]:
     )
     reminders.append(
         Reminder(
-            kind="collection_sheet_print",
-            practice_date=practice_date,
-            trigger_date=collection_sheet_print,
-            trigger_hour=22,
-            title="集金シート印刷",
-            body="スタジオ練習の2日前です。集金シートを印刷して準備してください。",
-            target="運営メンバー",
-        )
-    )
-    reminders.append(
-        Reminder(
             kind="cancellation_fee_warning",
             practice_date=practice_date,
-            trigger_date=rental_reminder_day,
+            trigger_date=attendance_decision,
             trigger_hour=22,
             title="キャンセル料発生前の確認",
             body="キャンセル料発生まで2日前です。予約状況とキャンセル判断を再確認してください。",
@@ -138,10 +140,21 @@ def build_reminders_for_practice(practice_date: date) -> list[Reminder]:
         Reminder(
             kind="rental_item_notice",
             practice_date=practice_date,
-            trigger_date=rental_reminder_day,
+            trigger_date=attendance_decision,
             trigger_hour=22,
             title="レンタル品の連絡",
-            body="スタジオへのレンタル品連絡を忘れないようにしてください。確認が必要な場合は早めに連絡をお願いします。",
+            body="出欠が確定した日です。レンタル品の連絡をスタジオへ行ってください。",
+            target="運営メンバー",
+        )
+    )
+    reminders.append(
+        Reminder(
+            kind="collection_sheet_print",
+            practice_date=practice_date,
+            trigger_date=collection_sheet_print,
+            trigger_hour=22,
+            title="集金シート印刷",
+            body="スタジオ練習の2日前です。集金シートを印刷して準備してください。",
             target="運営メンバー",
         )
     )
@@ -225,12 +238,14 @@ def render_markdown(reminders: list[Reminder], today: date) -> str:
 
 def main() -> int:
     AUTOMATION_DIR.mkdir(parents=True, exist_ok=True)
-    today = date.today()
+    tokyo_tz = ZoneInfo("Asia/Tokyo")
+    now_jst = datetime.now(tokyo_tz)
+    today = now_jst.date()
     history_path = AUTOMATION_DIR / "sent_history.json"
     sent_history = load_sent_history(history_path)
 
     due_reminders: list[Reminder] = []
-    current_hour = datetime.now().hour
+    current_hour = now_jst.hour
     for practice_date in build_practice_dates(today, months_ahead=8):
         for reminder in build_reminders_for_practice(practice_date):
             if reminder.trigger_date == today and reminder.trigger_hour == current_hour:
