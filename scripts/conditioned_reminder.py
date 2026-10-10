@@ -245,10 +245,9 @@ def main() -> int:
     sent_history = load_sent_history(history_path)
 
     due_reminders: list[Reminder] = []
-    current_hour = now_jst.hour
     for practice_date in build_practice_dates(today, months_ahead=8):
         for reminder in build_reminders_for_practice(practice_date):
-            if reminder.trigger_date == today and reminder.trigger_hour == current_hour:
+            if reminder.trigger_date == today:
                 due_reminders.append(reminder)
 
     report_path = AUTOMATION_DIR / f"reminder_{today.isoformat()}.md"
