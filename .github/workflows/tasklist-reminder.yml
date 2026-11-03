@@ -1,0 +1,43 @@
+name: Tasklist Daily Reminder
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  tasklist-reminder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      TZ: Asia/Tokyo
+      LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+      LINE_GROUP_ID_PERSONAL: ${{ secrets.LINE_GROUP_ID_PERSONAL }}
+      TASKLIST_SHEET_CSV_URL: ${{ secrets.TASKLIST_SHEET_CSV_URL }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Send LINE reminders for today's tasks
+        run: python3 scripts/tasklist_daily_reminder.py
+
+      - name: Notify LINE on workflow failure
+        if: ${{ failure() }}
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_GROUP_ID_PERSONAL: ${{ secrets.LINE_GROUP_ID_PERSONAL }}
+          LINE_GROUP_ID_FAILURE: ${{ secrets.LINE_GROUP_ID_FAILURE || secrets.LINE_GROUP_ID_PERSONAL }}
+        run: |
+          TARGET_GROUP_ID="${LINE_GROUP_ID_FAILURE:-${LINE_GROUP_ID_PERSONAL}}"
+          MESSAGE="GitHub Actions workflow failed: Tasklist Daily Reminder (${GITHUB_WORKFLOW}) | run_id=${GITHUB_RUN_ID} | ref=${GITHUB_REF_NAME}"
+          curl -sS -X POST "https://api.line.me/v2/bot/message/push" \
+            -H "Authorization: Bearer ${LINE_CHANNEL_ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data "{\"to\":\"${TARGET_GROUP_ID}\",\"messages\":[{\"type\":\"text\",\"text\":\"${MESSAGE}\"}]}"
