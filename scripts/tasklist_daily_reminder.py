@@ -183,13 +183,13 @@ def render_line_message(task_info: dict[str, object]) -> str:
     return f"タスク：{task}\n担当：{assignee}\n分類：{category}\n"
 
 
-def send_line_message(message: str, *, group_id_env: str = "LINE_GROUP_ID_PERSONAL") -> bool:
+def send_line_message(message: str, *, group_id_env: str = "LINE_GROUP_ID_TASK_POST") -> bool:
     if os.environ.get("DRY_RUN") == "1":
         print(f"[DRY RUN] LINE message would be sent:\n{message}")
         return True
 
     token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
-    group_id = os.environ.get(group_id_env) or os.environ.get("LINE_GROUP_ID_PERSONAL")
+    group_id = os.environ.get(group_id_env)
     if not token or not group_id:
         print(f"LINE secrets are not configured for {group_id_env}; skipping send.")
         return False
@@ -247,7 +247,7 @@ def main() -> int:
     for task_info in due_tasks:
         message = render_line_message(task_info)
         print(f"Sending reminder for {task_info['task']}")
-        if send_line_message(message, group_id_env="LINE_GROUP_ID_PERSONAL"):
+        if send_line_message(message, group_id_env="LINE_GROUP_ID_TASK_POST"):
             sent_count += 1
 
     print(f"Sent {sent_count} reminder(s) for {today.isoformat()}.")
